@@ -14,7 +14,7 @@ export default function SidebarNav({ role }: { role: string }) {
     { name: 'Sections', href: '/dashboard/sections', icon: Layers, roles: ['OWNER'] },
     { name: 'Users', href: '/dashboard/users', icon: Users, roles: ['OWNER', 'SUPERVISOR'] },
     { name: 'AI Agents', href: '/dashboard/agents', icon: Bot, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
-    { name: 'Knowledge Base', href: '/dashboard/knowledge', icon: Database, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
+    { name: 'Knowledge Base', href: '/dashboard/knowledge-buckets', icon: Database, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
     { name: 'Conversations', href: '/dashboard/conversations', icon: MessageSquare, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
   ];
 
