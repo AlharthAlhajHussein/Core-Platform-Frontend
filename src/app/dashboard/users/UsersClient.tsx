@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUserRole, deleteUser, getCurrentUser } from '@/services/users';
-import { getSections } from '@/services/sections';
-import { Users, Plus, Trash2, Shield, ShieldAlert, Filter, X } from 'lucide-react';
+import { getSections, removeUserFromSection } from '@/services/sections';
+import { Users, Plus, Trash2, UserMinus, Shield, ShieldAlert, Filter, X, Check, AlertCircle, Info } from 'lucide-react';
 
 interface UsersClientProps {
   currentUserRole: 'OWNER' | 'SUPERVISOR';
@@ -21,6 +21,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -29,6 +30,21 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
     role: 'EMPLOYEE',
     section_id: '',
   });
+
+  // Custom Dialog States
+  const [alertDialog, setAlertDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+  }>({ isOpen: false, title: '', message: '', type: 'info' });
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // --- DATA FETCHING ---
   const fetchInitialData = async () => {
@@ -74,16 +90,24 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
     if (sections.length > 0) fetchFilteredUsers();
   }, [filterSectionId]);
 
+  // --- HELPERS ---
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setAlertDialog({ isOpen: true, title, message, type });
+  };
+
   // --- EVENT HANDLERS ---
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsCreating(true);
+    
     try {
       // Clean up payload based on role
       const payload = { ...formData };
       if (currentUserRole === 'SUPERVISOR') {
         payload.role = 'EMPLOYEE';
         if (!payload.section_id) {
-          return alert('Please select a section for the new employee.');
+          setIsCreating(false);
+          return showAlert('Missing Information', 'Please select a section for the new employee.', 'error');
         }
       } else if (payload.section_id === '') {
         delete payload.section_id; // Owners can omit section_id
@@ -97,33 +121,79 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
       if (currentUserRole === 'OWNER') fetchFilteredUsers();
       else fetchInitialData();
       
+      showAlert('Success', 'User invited successfully!', 'success');
     } catch (error: any) {
-      alert(error.response?.data?.detail || 'Failed to create user');
+      showAlert('Error', error.response?.data?.detail || 'Failed to create user', 'error');
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleRoleChange = async (userId: string, currentRole: string) => {
+  const confirmRoleChange = (userId: string, currentRole: string) => {
     const newRole = currentRole === 'SUPERVISOR' ? 'EMPLOYEE' : 'SUPERVISOR';
-    if (!window.confirm(`Are you sure you want to change this user to ${newRole}?`)) return;
-    
-    try {
-      await updateUserRole(userId, newRole);
-      if (currentUserRole === 'OWNER') fetchFilteredUsers();
-      else fetchInitialData();
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Failed to update role');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Change User Role',
+      message: `Are you sure you want to change this user to ${newRole}?`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await updateUserRole(userId, newRole);
+          if (currentUserRole === 'OWNER') fetchFilteredUsers();
+          else fetchInitialData();
+          showAlert('Success', `User role successfully updated to ${newRole}.`, 'success');
+        } catch (error: any) {
+          showAlert('Error', error.response?.data?.detail || 'Failed to update role', 'error');
+        }
+      }
+    });
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to delete this user completely? This action cannot be undone.')) return;
-    
-    try {
-      await deleteUser(userId);
-      if (currentUserRole === 'OWNER') fetchFilteredUsers();
-      else fetchInitialData();
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Failed to delete user');
+  const confirmDeleteUser = (userId: string) => {
+    // --- SUPERVISOR LOGIC: Remove from section only ---
+    if (currentUserRole === 'SUPERVISOR') {
+      let sectionIdToRemove = filterSectionId;
+      
+      // Edge Case: If viewing "All Sections", we need to figure out which section to remove them from
+      if (sectionIdToRemove === 'ALL') {
+        if (sections.length === 1) {
+          sectionIdToRemove = sections[0].id;
+        } else {
+          return showAlert('Missing Information', 'Please select a specific section from the filter above to remove this user from.', 'error');
+        }
+      }
+
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Remove User from Section',
+        message: 'Are you sure you want to remove this user from the section?',
+        onConfirm: async () => {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          try {
+            await removeUserFromSection(sectionIdToRemove, userId);
+            fetchFilteredUsers(); // Refresh the list seamlessly
+          } catch (error: any) {
+            showAlert('Error', error.response?.data?.detail || 'Failed to remove user from section', 'error');
+          }
+        }
+      });
+      
+    // --- OWNER LOGIC: Delete completely from company ---
+    } else {
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Delete User',
+        message: 'Are you sure you want to delete this user completely? This action cannot be undone.',
+        onConfirm: async () => {
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          try {
+            await deleteUser(userId);
+            fetchFilteredUsers();
+          } catch (error: any) {
+            showAlert('Error', error.response?.data?.detail || 'Failed to delete user', 'error');
+          }
+        }
+      });
     }
   };
 
@@ -144,7 +214,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
             <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
               <Filter size={16} className="text-slate-400" />
               <select 
-                className="bg-transparent text-sm font-medium text-slate-700 focus:outline-none"
+                className="bg-transparent text-sm font-medium text-slate-700 focus:outline-none cursor-pointer"
                 value={filterSectionId}
                 onChange={(e) => setFilterSectionId(e.target.value)}
               >
@@ -156,7 +226,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
           <button 
             onClick={() => setIsCreateOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-sm hover:shadow-md cursor-pointer"
           >
             <Plus size={20} /> Invite User
           </button>
@@ -203,8 +273,8 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
                       {/* Promote/Demote Button (OWNER ONLY) */}
                       {currentUserRole === 'OWNER' && user.role !== 'OWNER' && (
                         <button 
-                          onClick={() => handleRoleChange(user.id, user.role)}
-                          className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                          onClick={() => confirmRoleChange(user.id, user.role)}
+                          className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 hover:shadow-sm rounded-lg transition-all cursor-pointer"
                           title={user.role === 'EMPLOYEE' ? 'Promote to Supervisor' : 'Demote to Employee'}
                         >
                           {user.role === 'EMPLOYEE' ? <Shield size={18} /> : <ShieldAlert size={18} />}
@@ -213,12 +283,12 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
                       {/* Delete Button */}
                       <button 
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => confirmDeleteUser(user.id)}
                         disabled={user.id === currentUserId}
-                        className={`p-2 rounded-lg transition-colors ${user.id === currentUserId ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
-                        title={user.id === currentUserId ? "You cannot delete yourself" : "Delete User"}
+                        className={`p-2 rounded-lg transition-all ${user.id === currentUserId ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 hover:shadow-sm cursor-pointer'}`}
+                        title={user.id === currentUserId ? "You cannot remove yourself" : (currentUserRole === 'SUPERVISOR' ? "Remove from Section" : "Delete User")}
                       >
-                        <Trash2 size={18} />
+                        {currentUserRole === 'SUPERVISOR' ? <UserMinus size={18} /> : <Trash2 size={18} />}
                       </button>
                     </td>
                   </tr>
@@ -235,7 +305,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="flex justify-between items-center p-6 border-b border-slate-100">
               <h2 className="text-lg font-bold text-slate-900">Invite New User</h2>
-              <button onClick={() => setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+              <button onClick={() => !isCreating && setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -262,7 +332,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Role</label>
                   {currentUserRole === 'OWNER' ? (
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900 cursor-pointer" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
                       <option value="EMPLOYEE">Employee</option>
                       <option value="SUPERVISOR">Supervisor</option>
                     </select>
@@ -272,20 +342,70 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Section {currentUserRole === 'OWNER' ? '(Optional)' : ''}</label>
-                  <select required={currentUserRole === 'SUPERVISOR'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900" value={formData.section_id} onChange={e => setFormData({...formData, section_id: e.target.value})}>
+                  <select required={currentUserRole === 'SUPERVISOR'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900 cursor-pointer" value={formData.section_id} onChange={e => setFormData({...formData, section_id: e.target.value})}>
                     <option value="" disabled={currentUserRole === 'SUPERVISOR'}>{currentUserRole === 'SUPERVISOR' ? '-- Select a section --' : 'No Section'}</option>
                     {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
                   </select>
                 </div>
               </div>
 
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors mt-6">
-                Create User Account
+              <button type="submit" disabled={isCreating} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all mt-6 cursor-pointer ${isCreating ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}>
+                {isCreating ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Creating...</> : 'Create User Account'}
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* CUSTOM ALERT MODAL */}
+      {alertDialog.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                {alertDialog.type === 'success' && <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Check size={18} /></div>}
+                {alertDialog.type === 'error' && <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><AlertCircle size={18} /></div>}
+                {alertDialog.type === 'info' && <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><Info size={18} /></div>}
+                <h3 className="text-lg font-bold text-slate-900">{alertDialog.title}</h3>
+              </div>
+              <p className="text-sm text-slate-600 mb-6 mt-2">{alertDialog.message}</p>
+              <button 
+                onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-all shadow-sm hover:shadow cursor-pointer"
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRM MODAL */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{confirmDialog.title}</h3>
+              <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+              <div className="flex items-center justify-end gap-3">
+                <button 
+                  onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDialog.onConfirm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
