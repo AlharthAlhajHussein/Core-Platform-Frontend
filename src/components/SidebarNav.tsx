@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Bot, MessageSquare, Database, Layers } from 'lucide-react';
+import { LayoutDashboard, Users, Bot, MessageSquare, Database, Layers, Settings } from 'lucide-react';
 
 export default function SidebarNav({ role }: { role: string }) {
   // usePathname gives us the exact current URL (e.g., "/dashboard/sections")
@@ -16,6 +16,7 @@ export default function SidebarNav({ role }: { role: string }) {
     { name: 'AI Agents', href: '/dashboard/agents', icon: Bot, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
     { name: 'Knowledge Base', href: '/dashboard/knowledge-buckets', icon: Database, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
     { name: 'Conversations', href: '/dashboard/conversations', icon: MessageSquare, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings, roles: ['OWNER', 'SUPERVISOR', 'EMPLOYEE'] },
   ];
 
   return (
@@ -28,7 +29,7 @@ export default function SidebarNav({ role }: { role: string }) {
           const isActive = pathname === link.href;
           
           return (
-            <Link key={link.name} href={link.href} className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+            <Link key={link.name} href={link.href} className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'}`}>
               <Icon size={20} /> {link.name}
             </Link>
           );
