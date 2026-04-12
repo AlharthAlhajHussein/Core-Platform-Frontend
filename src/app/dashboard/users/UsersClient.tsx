@@ -198,23 +198,23 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto text-slate-900 dark:text-slate-100 transition-colors">
       {/* HEADER & ACTIONS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Users className="text-indigo-600" /> Users
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Users className="text-indigo-600 dark:text-indigo-400" /> Users
           </h1>
-          <p className="text-slate-500 mt-1">Manage employee accounts, roles, and access.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage employee accounts, roles, and access.</p>
         </div>
         
         <div className="flex items-center gap-3">
           {/* Section Filter (OWNERS & SUPERVISORS) */}
           {(currentUserRole === 'OWNER' || currentUserRole === 'SUPERVISOR') && sections.length > 0 && (
-            <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
-              <Filter size={16} className="text-slate-400" />
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg shadow-sm transition-colors">
+              <Filter size={16} className="text-slate-400 dark:text-slate-500" />
               <select 
-                className="bg-transparent text-sm font-medium text-slate-700 focus:outline-none cursor-pointer"
+                className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
                 value={filterSectionId}
                 onChange={(e) => setFilterSectionId(e.target.value)}
               >
@@ -234,37 +234,37 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
       </div>
 
       {/* USERS TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider transition-colors">
                 <th className="px-6 py-4">Name</th>
                 <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Role</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {isLoading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-12 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400 mx-auto"></div>
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400 italic">
                     No users found.
                   </td>
                 </tr>
               ) : (
                 users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">{user.first_name} {user.last_name}</td>
-                    <td className="px-6 py-4 text-slate-600">{user.email}</td>
+                  <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-slate-100">{user.first_name} {user.last_name}</td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{user.email}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${user.role === 'OWNER' ? 'bg-purple-100 text-purple-700' : user.role === 'SUPERVISOR' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${user.role === 'OWNER' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : user.role === 'SUPERVISOR' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}`}>
                         {user.role}
                       </span>
                     </td>
@@ -274,7 +274,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
                       {currentUserRole === 'OWNER' && user.role !== 'OWNER' && (
                         <button 
                           onClick={() => confirmRoleChange(user.id, user.role)}
-                          className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 hover:shadow-sm rounded-lg transition-all cursor-pointer"
+                          className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 hover:shadow-sm rounded-lg transition-all cursor-pointer"
                           title={user.role === 'EMPLOYEE' ? 'Promote to Supervisor' : 'Demote to Employee'}
                         >
                           {user.role === 'EMPLOYEE' ? <Shield size={18} /> : <ShieldAlert size={18} />}
@@ -285,7 +285,7 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
                       <button 
                         onClick={() => confirmDeleteUser(user.id)}
                         disabled={user.id === currentUserId}
-                        className={`p-2 rounded-lg transition-all ${user.id === currentUserId ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 hover:shadow-sm cursor-pointer'}`}
+                        className={`p-2 rounded-lg transition-all ${user.id === currentUserId ? 'bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600 cursor-not-allowed' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 dark:hover:text-red-300 hover:shadow-sm cursor-pointer'}`}
                         title={user.id === currentUserId ? "You cannot remove yourself" : (currentUserRole === 'SUPERVISOR' ? "Remove from Section" : "Delete User")}
                       >
                         {currentUserRole === 'SUPERVISOR' ? <UserMinus size={18} /> : <Trash2 size={18} />}
@@ -301,48 +301,48 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
       {/* CREATE USER MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-slate-900">Invite New User</h2>
-              <button onClick={() => !isCreating && setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-50 p-4 transition-colors">
+          <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-colors">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Invite New User</h2>
+              <button onClick={() => !isCreating && setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">First Name</label>
-                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none text-gray-900" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">First Name</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-gray-900 dark:text-white transition-colors" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Last Name</label>
-                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none text-gray-900" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Last Name</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-gray-900 dark:text-white transition-colors" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
                 </div>
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Email</label>
-                <input type="email" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none text-gray-900" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Email</label>
+                <input type="email" required className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-gray-900 dark:text-white transition-colors" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Password</label>
-                <input type="password" required minLength={8} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:outline-none text-gray-900" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Password</label>
+                <input type="password" required minLength={8} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-gray-900 dark:text-white transition-colors" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-slate-700">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Role</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Role</label>
                   {currentUserRole === 'OWNER' ? (
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900 cursor-pointer" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                    <select className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:outline-none text-gray-900 dark:text-white cursor-pointer transition-colors" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
                       <option value="EMPLOYEE">Employee</option>
                       <option value="SUPERVISOR">Supervisor</option>
                     </select>
                   ) : (
-                    <input type="text" disabled value="Employee" className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed" />
+                    <input type="text" disabled value="Employee" className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed transition-colors" />
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1">Section {currentUserRole === 'OWNER' ? '(Optional)' : ''}</label>
-                  <select required={currentUserRole === 'SUPERVISOR'} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-900 cursor-pointer" value={formData.section_id} onChange={e => setFormData({...formData, section_id: e.target.value})}>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Section {currentUserRole === 'OWNER' ? '(Optional)' : ''}</label>
+                  <select required={currentUserRole === 'SUPERVISOR'} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:outline-none text-gray-900 dark:text-white cursor-pointer transition-colors" value={formData.section_id} onChange={e => setFormData({...formData, section_id: e.target.value})}>
                     <option value="" disabled={currentUserRole === 'SUPERVISOR'}>{currentUserRole === 'SUPERVISOR' ? '-- Select a section --' : 'No Section'}</option>
                     {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
                   </select>
@@ -359,19 +359,19 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
       {/* CUSTOM ALERT MODAL */}
       {alertDialog.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-2">
-                {alertDialog.type === 'success' && <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600"><Check size={18} /></div>}
-                {alertDialog.type === 'error' && <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600"><AlertCircle size={18} /></div>}
-                {alertDialog.type === 'info' && <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><Info size={18} /></div>}
-                <h3 className="text-lg font-bold text-slate-900">{alertDialog.title}</h3>
+                {alertDialog.type === 'success' && <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><Check size={18} /></div>}
+                {alertDialog.type === 'error' && <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400"><AlertCircle size={18} /></div>}
+                {alertDialog.type === 'info' && <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400"><Info size={18} /></div>}
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{alertDialog.title}</h3>
               </div>
-              <p className="text-sm text-slate-600 mb-6 mt-2">{alertDialog.message}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6 mt-2">{alertDialog.message}</p>
               <button 
                 onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-all shadow-sm hover:shadow cursor-pointer"
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-all shadow-sm hover:shadow cursor-pointer"
               >
                 Okay
               </button>
@@ -382,15 +382,15 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
 
       {/* CUSTOM CONFIRM MODAL */}
       {confirmDialog.isOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+        <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all">
+          <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div className="p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{confirmDialog.title}</h3>
-              <p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{confirmDialog.title}</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">{confirmDialog.message}</p>
               <div className="flex items-center justify-end gap-3">
                 <button 
                   onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
