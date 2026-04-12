@@ -175,7 +175,7 @@ export default function SectionsClient() {
             const sectionUsers = sectionUsersMap[section.id] || [];
 
             return (
-            <div key={section.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative flex flex-col">
+            <div key={section.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 relative flex flex-col">
               <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{section.name}</h3>
               
               {/* Users List Display */}

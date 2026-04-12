@@ -190,7 +190,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
         <div className="flex items-center gap-3">
           {/* Section Filter (Visible to Owners, or anyone assigned to > 1 section) */}
           {((currentUserRole === 'OWNER' && sections.length > 0) || sections.length > 1) && (
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-lg shadow-sm transition-colors">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 px-3 py-2 rounded-lg shadow-sm transition-all duration-200">
               <Filter size={16} className="text-slate-400 dark:text-slate-500" />
               <select 
                 className="bg-transparent text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
@@ -229,7 +229,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {buckets.map((bucket) => (
-            <div key={bucket.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-all relative flex flex-col">
+            <div key={bucket.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 relative flex flex-col">
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white">{bucket.name}</h3>
                 <div className="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 p-2 rounded-lg transition-colors">
