@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCurrentUser } from '@/services/users';
-import { Settings, User, Moon, Globe, Trash2, Check, AlertCircle, Info, Save } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { getCurrentUser, updateUserProfile, updateUserAccount, uploadProfileImage } from '@/services/users';
+import { Settings, User, Moon, Globe, Trash2, Check, AlertCircle, Info, Save, Shield, Camera, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface SettingsClientProps {
   currentUserId: string;
@@ -11,13 +12,30 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ currentUserId, currentUserRole }: SettingsClientProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentEmail, setCurrentEmail] = useState('');
   
   // Profile State
-  const [formData, setFormData] = useState({
+  const [profileData, setProfileData] = useState({
     first_name: '',
     last_name: '',
-    email: '',
+    position: '',
+    bio: '',
+    phone_number: '',
+    country: '',
+    gender: 'Male',
+    profile_image: '',
+  });
+
+  // Account Security State
+  const [accountData, setAccountData] = useState({
+    old_password: '',
+    new_email: '',
+    new_password: '',
   });
 
   // Preferences State
@@ -46,11 +64,17 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
       try {
         // 1. Fetch User Profile
         const userData = await getCurrentUser();
-        setFormData({
+        setProfileData({
           first_name: userData.first_name || '',
           last_name: userData.last_name || '',
-          email: userData.email || '',
+          position: userData.position || '',
+          bio: userData.bio || '',
+          phone_number: userData.phone_number || '',
+          country: userData.country || '',
+          gender: userData.gender || 'Male',
+          profile_image: userData.profile_image || '',
         });
+        setCurrentEmail(userData.email || '');
 
         // 2. Hydrate Theme from Local Storage
         let currentTheme = localStorage.getItem('theme');
@@ -105,15 +129,84 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
     // Note: Full localization (i18n) setup will be needed to actually translate strings globally.
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate File Size (e.g., max 5MB) and Type
+    if (file.size > 5 * 1024 * 1024) return showAlert('File Too Large', 'Please upload an image smaller than 5MB.', 'error');
+    if (!file.type.startsWith('image/')) return showAlert('Invalid File', 'Please upload a valid image file.', 'error');
+
+    setIsUploadingImage(true);
+    try {
+      // Note: Backend must implement this endpoint to upload to GCS bucket: agent-platform-bucket-1
+      const response = await uploadProfileImage(file);
+      
+      if (response && response.url) {
+        const updatedProfile = { ...profileData, profile_image: response.url };
+        setProfileData(updatedProfile);
+        // Auto-save the profile so the image is immediately persisted
+        await updateUserProfile(updatedProfile);
+        showAlert('Success', 'Profile image updated successfully.', 'success');
+      }
+    } catch (error: any) {
+      showAlert('Upload Failed', error.response?.data?.detail || 'Failed to upload image.', 'error');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const updatedProfile = { ...profileData, profile_image: '' };
+    setProfileData(updatedProfile);
+    try {
+      await updateUserProfile(updatedProfile);
+      showAlert('Success', 'Profile image removed.', 'success');
+    } catch (error: any) {
+      showAlert('Error', 'Failed to remove image.', 'error');
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+    setIsSavingProfile(true);
     
-    // Mock API delay since we don't have a PUT /users/me endpoint yet!
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      await updateUserProfile(profileData);
       showAlert('Success', 'Your profile information has been successfully updated.', 'success');
-    }, 800);
+    } catch (error: any) {
+      showAlert('Error', error.response?.data?.detail || 'Failed to update profile.', 'error');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleSaveAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accountData.old_password) return showAlert('Required', 'Current password is required to make security changes.', 'error');
+    
+    // Prepare Payload - Only send changed fields
+    const payload: any = { old_password: accountData.old_password };
+    if (accountData.new_email.trim() !== '') payload.new_email = accountData.new_email;
+    if (accountData.new_password.trim() !== '') payload.new_password = accountData.new_password;
+
+    setIsSavingAccount(true);
+    try {
+      await updateUserAccount(payload);
+      showAlert('Success', 'Account security settings updated successfully.', 'success');
+      if (payload.new_email) setCurrentEmail(payload.new_email);
+      
+      // Clear passwords from form on success
+      setAccountData({ old_password: '', new_email: '', new_password: '' });
+    } catch (error: any) {
+      // Handle specific Edge Cases 
+      if (error.response?.status === 401) showAlert('Authentication Failed', 'Your current password was incorrect.', 'error');
+      else if (error.response?.status === 409) showAlert('Conflict', 'The requested email is already taken by another user.', 'error');
+      else showAlert('Error', error.response?.data?.detail || 'Failed to update account security.', 'error');
+    } finally {
+      setIsSavingAccount(false);
+    }
   };
 
   const confirmDeleteAccount = () => {
@@ -153,25 +246,119 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
             <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg"><User size={20} /></div>
             <h2 className="text-lg font-bold">Profile Information</h2>
           </div>
-          <form onSubmit={handleSaveProfile} className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">First Name</label>
-                <input type="text" required className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-slate-900 dark:text-white transition-colors" value={formData.first_name} onChange={e => setFormData({...formData, first_name: e.target.value})} />
+          
+          <div className="p-6 border-b border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-6">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border-4 border-white dark:border-slate-700 shadow-md flex items-center justify-center relative">
+                {profileData.profile_image && (profileData.profile_image.startsWith('http') || profileData.profile_image.startsWith('/')) ? (
+                    <Image src={profileData.profile_image} alt="Profile" fill className="object-cover" />
+                  ) : (
+                    <User size={40} className="text-slate-400 dark:text-slate-500" />
+                  )}
+                  
+                  {isUploadingImage && (
+                    <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center backdrop-blur-sm">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Last Name</label>
-                <input type="text" required className="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none text-slate-900 dark:text-white transition-colors" value={formData.last_name} onChange={e => setFormData({...formData, last_name: e.target.value})} />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Profile Avatar</h3>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/png, image/jpeg, image/webp" className="hidden" />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()} disabled={isUploadingImage}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Camera size={16} /> Upload Image
+                  </button>
+                  {profileData.profile_image && (
+                    <button onClick={handleRemoveImage} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-lg transition-colors cursor-pointer">
+                      <X size={16} /> Remove
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">JPG, PNG or WebP. Max size of 5MB.</p>
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
-                <input type="email" disabled className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-500 dark:text-slate-400 cursor-not-allowed transition-colors" value={formData.email} />
-                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Email address cannot be changed. Contact support if needed.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveProfile} className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">First Name</label>
+                <input type="text" required className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.first_name} onChange={e => setProfileData({...profileData, first_name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Last Name</label>
+                <input type="text" required className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.last_name} onChange={e => setProfileData({...profileData, last_name: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Position / Job Title</label>
+                <input type="text" className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.position} onChange={e => setProfileData({...profileData, position: e.target.value})} placeholder="e.g. Sales Manager" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                <input type="tel" className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.phone_number} onChange={e => setProfileData({...profileData, phone_number: e.target.value})} placeholder="+1 234 567 890" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Country</label>
+                <input type="text" className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.country} onChange={e => setProfileData({...profileData, country: e.target.value})} placeholder="e.g. USA" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
+                <select className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={profileData.gender} onChange={e => setProfileData({...profileData, gender: e.target.value})}>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Bio</label>
+              <textarea rows={3} className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white resize-none" value={profileData.bio} onChange={e => setProfileData({...profileData, bio: e.target.value})} placeholder="A short bio about yourself..."></textarea>
+            </div>
+            <div className="flex justify-end">
+              <button type="submit" disabled={isSavingProfile} className={`flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-lg transition-all shadow-sm ${isSavingProfile ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md cursor-pointer'}`}>
+                {isSavingProfile ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Saving...</> : <><Save size={18} /> Save Profile</>}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* ACCOUNT SECURITY SECTION */}
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden transition-colors">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+            <div className="p-2 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg"><Shield size={20} /></div>
+            <h2 className="text-lg font-bold">Account Security</h2>
+          </div>
+          <form onSubmit={handleSaveAccount} className="p-6 space-y-6">
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Your current login email is <strong className="text-slate-900 dark:text-white">{currentEmail}</strong>. 
+                To update your email or password, you must provide your current password.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Email Address</label>
+                <input type="email" placeholder="Leave empty to keep current" className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={accountData.new_email} onChange={e => setAccountData({...accountData, new_email: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">New Password</label>
+                <input type="password" minLength={8} placeholder="Leave empty to keep current" className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-slate-900 dark:text-white" value={accountData.new_password} onChange={e => setAccountData({...accountData, new_password: e.target.value})} />
+              </div>
+              <div className="md:col-span-2 pt-4 border-t border-slate-100 dark:border-slate-700">
+                <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1.5">Current Password (Required to save changes)</label>
+                <input type="password" required placeholder="Verify your identity..." className="w-full md:w-1/2 px-4 py-2 border border-amber-300 dark:border-amber-700/50 bg-amber-50/50 dark:bg-amber-900/10 rounded-lg focus:ring-2 focus:ring-amber-500 dark:focus:outline-none text-slate-900 dark:text-white" value={accountData.old_password} onChange={e => setAccountData({...accountData, old_password: e.target.value})} />
               </div>
             </div>
             <div className="flex justify-end">
-              <button type="submit" disabled={isSaving} className={`flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-lg transition-all shadow-sm ${isSaving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md cursor-pointer'}`}>
-                {isSaving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Saving...</> : <><Save size={18} /> Save Changes</>}
+              <button type="submit" disabled={isSavingAccount || !accountData.old_password} className={`flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-lg transition-all shadow-sm ${isSavingAccount || !accountData.old_password ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 hover:shadow-md cursor-pointer'}`}>
+                {isSavingAccount ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> Verifying...</> : <><Shield size={18} /> Update Security</>}
               </button>
             </div>
           </form>

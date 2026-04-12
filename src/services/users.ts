@@ -27,3 +27,24 @@ export const getCurrentUser = async () => {
   const { data } = await api.get('/users/me');
   return data;
 };
+
+export const updateUserProfile = async (profileData: any) => {
+  const { data } = await api.put('/users/me/profile', profileData);
+  return data;
+};
+
+export const updateUserAccount = async (accountData: any) => {
+  const { data } = await api.put('/users/me/account', accountData);
+  return data;
+};
+
+// Expects your FastAPI backend to have a POST /users/me/profile/image endpoint
+// which uploads to your Google Cloud Storage bucket and returns { "url": "..." }
+export const uploadProfileImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post('/users/me/profile/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
