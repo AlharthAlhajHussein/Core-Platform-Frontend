@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { getOverviewStats } from '@/services/overview';
+import { getCurrentUser } from '@/services/users';
 import { Users, Bot, MessageSquare, Database, Layers, AlertCircle, Activity, Zap, MessageCircle } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface OverviewClientProps {
   role: string;
@@ -10,16 +12,19 @@ interface OverviewClientProps {
 
 export default function OverviewClient({ role }: OverviewClientProps) {
   const [stats, setStats] = useState<any>(null);
+  const [firstName, setFirstName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const data = await getOverviewStats();
+        const [data, user] = await Promise.all([getOverviewStats(), getCurrentUser()]);
         setStats(data);
+        setFirstName(user.first_name || '');
       } catch (err: any) {
-        setError(err.response?.data?.detail || 'Failed to load overview statistics.');
+        setError(err.response?.data?.detail || t.overview.loadError);
       } finally {
         setIsLoading(false);
       }
@@ -37,25 +42,25 @@ export default function OverviewClient({ role }: OverviewClientProps) {
 
   // Map the 10 API properties accurately into beautiful UI cards
   const statCards = [
-    { key: 'total_sections', label: 'Total Sections', icon: Layers, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
-    { key: 'total_users', label: 'Total Users', icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-    { key: 'active_agents', label: 'Active Agents', icon: Bot, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-    { key: 'suspended_agents', label: 'Suspended Agents', icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { key: 'active_convs', label: 'Active Convs', icon: Activity, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/30' },
-    { key: 'completed_convs', label: 'Completed Convs', icon: MessageSquare, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-100 dark:bg-violet-900/30' },
-    { key: 'human_handovers', label: 'Human Handovers', icon: Users, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-    { key: 'knowledge_bases', label: 'Knowledge Bases', icon: Database, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
-    { key: 'total_messages_sent', label: 'Messages Sent', icon: MessageCircle, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-700/50' },
-    { key: 'total_tokens_used', label: 'Tokens Used', icon: Zap, color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+    { key: 'total_sections', label: t.overview.totalSections, icon: Layers, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-100 dark:bg-indigo-900/30' },
+    { key: 'total_users', label: t.overview.totalUsers, icon: Users, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { key: 'active_agents', label: t.overview.activeAgents, icon: Bot, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    { key: 'suspended_agents', label: t.overview.suspendedAgents, icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { key: 'active_convs', label: t.overview.activeConvs, icon: Activity, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-100 dark:bg-sky-900/30' },
+    { key: 'completed_convs', label: t.overview.completedConvs, icon: MessageSquare, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-100 dark:bg-violet-900/30' },
+    { key: 'human_handovers', label: t.overview.humanHandovers, icon: Users, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+    { key: 'knowledge_bases', label: t.overview.knowledgeBases, icon: Database, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+    { key: 'total_messages_sent', label: t.overview.totalMessages, icon: MessageCircle, color: 'text-slate-600 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-700/50' },
+    { key: 'total_tokens_used', label: t.overview.totalTokens, icon: Zap, color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-900/30' },
   ];
 
   return (
     <div className="p-8 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dashboard Overview</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Welcome back! You are logged in as an <span className="font-semibold text-indigo-600 dark:text-indigo-400">{role}</span>.
+        <h1 className="text-2xl rtl:text-3xl font-bold text-slate-900 dark:text-white">{t.overview.title}</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1 rtl:text-lg">
+          {t.overview.subtitleRole}<span className="font-semibold text-indigo-600 dark:text-indigo-400">{t.common.roles[role as keyof typeof t.common.roles] || role} {firstName}</span>
         </p>
       </div>
 
@@ -91,7 +96,7 @@ export default function OverviewClient({ role }: OverviewClientProps) {
               <div key={index} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-200 group">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide truncate pr-2">
+                    <p className="text-xs rtl:text-sm font-semibold rtl:font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide truncate pr-2">
                       {stat.label}
                     </p>
                     <h3 className="text-2xl font-bold text-slate-800 dark:text-white" title={rawValue.toLocaleString()}>

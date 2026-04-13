@@ -12,10 +12,13 @@ const api = axios.create({
 // 2. Request Interceptor: Runs BEFORE every request is sent
 api.interceptors.request.use((config) => {
   const token = Cookies.get('access_token');
-  // If we have a token, attach it to the Authorization header
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const lang = Cookies.get('language') || 'en'; // Fetch preferred language
+
+  if (config.headers) {
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    config.headers['Accept-Language'] = lang; // Tell backend which language to return errors/messages in
   }
+  
   return config;
 });
 

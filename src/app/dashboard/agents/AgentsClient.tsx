@@ -6,6 +6,7 @@ import { getSections } from '@/services/sections';
 import { getKnowledgeBuckets } from '@/services/knowledge';
 import { getUsers, getCurrentUser } from '@/services/users';
 import { Bot, Plus, Trash2, Edit, UserPlus, Filter, X, Check, AlertCircle, Info, Power, PowerOff, Users, UserMinus } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="text-emerald-500">
@@ -30,6 +31,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
   const [knowledgeBuckets, setKnowledgeBuckets] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useLanguage();
 
   // Filters
   const [filterSectionId, setFilterSectionId] = useState<string>('ALL');
@@ -90,7 +92,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
       const data = await getAgentUsers(agentId);
       setAgentUsers(data);
     } catch (error: any) {
-      showAlert('Error', error.response?.data?.detail || 'Failed to load users for this agent', 'error');
+      showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
     } finally {
       setIsLoadingUsers(false);
     }
@@ -216,7 +218,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
         // Handle Create (POST)
         if (!formData.section_id) {
           setIsSubmitting(false);
-          return showAlert('Missing Information', 'Please assign this agent to a section.', 'error');
+          return showAlert(t.agents.alerts.missingInfo, t.agents.alerts.missingSec, 'error');
         }
         payload.section_id = formData.section_id;
         
@@ -225,13 +227,13 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
         if (formData.telegram_token.trim() !== '') payload.telegram_token = formData.telegram_token;
 
         await createAgent(payload);
-        showAlert('Success', 'AI Agent deployed successfully!', 'success');
+        showAlert(t.common.success, t.agents.alerts.createSuccess, 'success');
       }
 
       setIsFormOpen(false);
       fetchInitialData();
     } catch (error: any) {
-      showAlert('Error', error.response?.data?.detail || 'Failed to save Agent', 'error');
+      showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -240,15 +242,15 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
   const confirmDeleteAgent = (agentId: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Agent',
-      message: 'Are you sure you want to permanently delete this AI agent? This action cannot be undone.',
+      title: t.agents.alerts.deleteTitle,
+      message: t.agents.alerts.deleteMsg,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {
           await deleteAgent(agentId);
           fetchInitialData();
         } catch (error: any) {
-          showAlert('Error', error.response?.data?.detail || 'Failed to delete agent', 'error');
+          showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
         }
       }
     });
@@ -257,16 +259,16 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
   const confirmRemoveEmployee = (agentId: string, userId: string, userName: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Remove Employee',
-      message: `Are you sure you want to remove ${userName} from this agent?`,
+      title: t.agents.alerts.removeEmpTitle,
+      message: `${t.agents.alerts.removeEmpMsg1}${userName}${t.agents.alerts.removeEmpMsg2}`,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {
           await removeEmployeeFromAgent(agentId, userId);
-          showAlert('Success', 'Employee removed successfully!', 'success');
+          showAlert(t.common.success, t.agents.alerts.removeEmpSuccess, 'success');
           fetchAgentUsers(agentId); // Refresh the current modal's list smoothly
         } catch (error: any) {
-          showAlert('Error', error.response?.data?.detail || 'Failed to remove employee', 'error');
+          showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
         }
       }
     });
@@ -274,16 +276,16 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
 
   const handleAssignUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedUserId) return showAlert("Missing Information", "Please select an employee", 'error');
+    if (!selectedUserId) return showAlert(t.agents.alerts.missingInfo, t.agents.alerts.missingEmp, 'error');
     
     setIsAssigning(true);
     try {
       await assignEmployeeToAgent(selectedAgentId, selectedUserId);
       setSelectedUserId('');
-      showAlert('Success', 'Employee assigned to agent successfully!', 'success');
+      showAlert(t.common.success, t.agents.alerts.assignEmpSuccess, 'success');
       fetchAgentUsers(selectedAgentId); // Refresh the user list visually in the open modal
     } catch (error: any) {
-      showAlert('Error', error.response?.data?.detail || 'Failed to assign employee', 'error');
+      showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
     } finally {
       setIsAssigning(false);
     }
@@ -294,10 +296,10 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
       {/* HEADER & ACTIONS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Bot className="text-indigo-600 dark:text-indigo-400" /> AI Agents
+          <h1 className="text-2xl rtl:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Bot className="text-indigo-600 dark:text-indigo-400" /> {t.agents.title}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Deploy, configure, and manage your AI assistants.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 rtl:text-lg">{t.agents.subtitle}</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -310,7 +312,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                 value={filterSectionId}
                 onChange={(e) => { setFilterSectionId(e.target.value); setFilterUserId('ALL'); }}
               >
-                <option value="ALL">All Sections</option>
+                <option value="ALL">{t.agents.filterAllSec}</option>
                 {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
               </select>
             </div>
@@ -325,7 +327,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                 value={filterUserId}
                 onChange={(e) => setFilterUserId(e.target.value)}
               >
-                <option value="ALL">All Users</option>
+                <option value="ALL">{t.agents.filterAllUsers}</option>
                 {users.map((u: any) => <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>)}
               </select>
             </div>
@@ -336,7 +338,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
               onClick={openCreateModal}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-sm hover:shadow-md cursor-pointer"
             >
-              <Plus size={20} /> Create Agent
+              <Plus size={20} /> {t.agents.createBtn}
             </button>
           )}
         </div>
@@ -350,8 +352,8 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
       ) : agents.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition-colors">
           <Bot className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No AI Agents found</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Get started by creating a new AI Agent for your channels.</p>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">{t.agents.noAgents}</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t.agents.noAgentsSub}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -360,11 +362,11 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
               
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                  <h3 className="text-xl rtl:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
                     {agent.name}
                   </h3>
                 </div>
-                <div className={`p-2 rounded-lg transition-colors ${agent.is_active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`} title={agent.is_active ? 'Active' : 'Suspended'}>
+                <div className={`p-2 rounded-lg transition-colors ${agent.is_active ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`} title={agent.is_active ? t.agents.active : t.agents.suspended}>
                   {agent.is_active ? <Power size={20} /> : <PowerOff size={20} />}
                 </div>
               </div>
@@ -381,7 +383,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                   </div>
                 )}
                 {!agent.whatsapp_number && !agent.telegram_bot_username && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">No channels configured.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 italic">{t.agents.noChannels}</p>
                 )}
               </div>
 
@@ -390,7 +392,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                   onClick={() => openEditModal(agent)}
                   className="flex-1 bg-slate-100 dark:bg-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-400 text-slate-700 dark:text-slate-300 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <Edit size={16} /> Edit Details
+                  <Edit size={16} /> {t.agents.editBtn}
                 </button>
                 
                 {isManager && (
@@ -398,14 +400,14 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                     <button 
                       onClick={() => { setSelectedAgent(agent); setSelectedAgentId(agent.id); setIsAssignOpen(true); fetchAgentUsers(agent.id); }}
                       className="p-2 bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 rounded-lg transition-all cursor-pointer"
-                      title="Assign Employee"
+                      title={t.agents.assignBtn}
                     >
                       <UserPlus size={18} />
                     </button>
                     <button 
                       onClick={() => confirmDeleteAgent(agent.id)}
                       className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 dark:hover:text-red-300 hover:shadow-sm rounded-lg transition-all cursor-pointer"
-                      title="Delete Agent"
+                      title={t.agents.alerts.deleteTitle}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -422,33 +424,33 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-50 p-4 transition-colors">
           <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-colors">
             <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{editingAgent ? 'Edit Agent Configuration' : 'Create New AI Agent'}</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{editingAgent ? t.agents.editModalTitle : t.agents.createModalTitle}</h2>
               <button onClick={() => !isSubmitting && setIsFormOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Agent Name</label>
-                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g., Sales Bot" />
+                  <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.nameLabel}</label>
+                  <input type="text" required className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder={t.agents.namePlaceholder} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Section</label>
+                  <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.sectionLabel}</label>
                   <select required={!editingAgent} disabled={!!editingAgent} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:outline-none text-gray-900 dark:text-white" value={formData.section_id} onChange={e => setFormData({...formData, section_id: e.target.value})}>
-                    <option value="" disabled>-- Select a section --</option>
+                    <option value="" disabled>{t.agents.selectSec}</option>
                     {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">System Prompt</label>
-                <textarea required rows={4} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.system_prompt} onChange={e => setFormData({...formData, system_prompt: e.target.value})} placeholder="You are a helpful assistant..." />
+                <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.promptLabel}</label>
+                <textarea required rows={4} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.system_prompt} onChange={e => setFormData({...formData, system_prompt: e.target.value})} placeholder={t.agents.promptPlaceholder} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Model Type</label>
+                  <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.modelLabel}</label>
                   <select className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.model_type} onChange={e => setFormData({...formData, model_type: e.target.value})}>
                     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
@@ -457,13 +459,13 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Temperature ({formData.temperature})</label>
+                  <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.tempLabel} ({formData.temperature})</label>
                   <input type="range" min="0" max="2" step="0.1" className="w-full mt-2" value={formData.temperature} onChange={e => setFormData({...formData, temperature: parseFloat(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Linked Knowledge Bucket</label>
+                  <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.linkedKbLabel}</label>
                   <select className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.knowledge_bucket_registry_id} onChange={e => setFormData({...formData, knowledge_bucket_registry_id: e.target.value})}>
-                    <option value="">-- No Knowledge Base --</option>
+                    <option value="">{t.agents.noKb}</option>
                     {knowledgeBuckets.map(kb => <option key={kb.id} value={kb.id}>{kb.name}</option>)}
                   </select>
                 </div>
@@ -471,34 +473,34 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
 
               {/* Integrations */}
               <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-4">Channel Integrations</h4>
+                <h4 className="text-sm rtl:text-base font-bold text-slate-800 dark:text-white mb-4">{t.agents.channelsTitle}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">WhatsApp Number</label>
+                      <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.waNumberLabel}</label>
                       <input type="text" className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.whatsapp_number} onChange={e => setFormData({...formData, whatsapp_number: e.target.value})} placeholder="+1234567890" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">WhatsApp Token</label>
-                      <input type="password" disabled={clearWhatsappToken} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white disabled:opacity-50" value={formData.whatsapp_token} onChange={e => setFormData({...formData, whatsapp_token: e.target.value})} placeholder={editingAgent ? "Enter to update..." : "Token"} />
+                      <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.waTokenLabel}</label>
+                      <input type="password" disabled={clearWhatsappToken} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white disabled:opacity-50" value={formData.whatsapp_token} onChange={e => setFormData({...formData, whatsapp_token: e.target.value})} placeholder={editingAgent ? t.agents.tokenUpdatePlaceholder : t.agents.tokenPlaceholder} />
                       {editingAgent && (
                         <label className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
-                          <input type="checkbox" checked={clearWhatsappToken} onChange={e => setClearWhatsappToken(e.target.checked)} /> Explicitly clear token
+                          <input type="checkbox" checked={clearWhatsappToken} onChange={e => setClearWhatsappToken(e.target.checked)} /> {t.agents.clearToken}
                         </label>
                       )}
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Telegram Bot Username</label>
+                      <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.tgUsernameLabel}</label>
                       <input type="text" className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.telegram_bot_username} onChange={e => setFormData({...formData, telegram_bot_username: e.target.value})} placeholder="MyBot" />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">Telegram Token</label>
-                      <input type="password" disabled={clearTelegramToken} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white disabled:opacity-50" value={formData.telegram_token} onChange={e => setFormData({...formData, telegram_token: e.target.value})} placeholder={editingAgent ? "Enter to update..." : "Token"} />
+                      <label className="block text-xs rtl:text-sm font-bold text-gray-700 dark:text-slate-300 uppercase tracking-wide mb-1">{t.agents.tgTokenLabel}</label>
+                      <input type="password" disabled={clearTelegramToken} className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white disabled:opacity-50" value={formData.telegram_token} onChange={e => setFormData({...formData, telegram_token: e.target.value})} placeholder={editingAgent ? t.agents.tokenUpdatePlaceholder : t.agents.tokenPlaceholder} />
                       {editingAgent && (
                         <label className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
-                          <input type="checkbox" checked={clearTelegramToken} onChange={e => setClearTelegramToken(e.target.checked)} /> Explicitly clear token
+                          <input type="checkbox" checked={clearTelegramToken} onChange={e => setClearTelegramToken(e.target.checked)} /> {t.agents.clearToken}
                         </label>
                       )}
                     </div>
@@ -510,14 +512,14 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                 <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">
                     <input type="checkbox" className="w-4 h-4 text-indigo-600" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
-                    Agent is Active
+                    {t.agents.isActiveLabel}
                   </label>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-6">Suspend this agent to stop it from processing messages.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ltr:ml-6 rtl:mr-6">{t.agents.suspendDesc}</p>
                 </div>
               )}
 
               <button type="submit" disabled={isSubmitting} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all cursor-pointer ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}>
-                {isSubmitting ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Saving...</> : (editingAgent ? 'Save Changes' : 'Deploy Agent')}
+                {isSubmitting ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> {t.agents.savingBtn}</> : (editingAgent ? t.agents.saveChangesBtn : t.agents.deployBtn)}
               </button>
             </form>
           </div>
@@ -529,13 +531,13 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-50 p-4 transition-colors">
           <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-colors">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Assign Employee to Agent</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.agents.assignModalTitle}</h2>
               <button onClick={() => !isAssigning && setIsAssignOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             
             {/* Users with Access Section */}
             <div className="p-6 border-b border-slate-100 dark:border-slate-700">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Users with Current Access</label>
+              <label className="block text-sm rtl:text-base font-semibold text-gray-700 dark:text-slate-300 mb-2">{t.agents.usersAccessTitle}</label>
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700 max-h-40 overflow-y-auto">
                 {isLoadingUsers ? (
                   <div className="flex justify-center py-4"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600 dark:border-indigo-400"></div></div>
@@ -545,7 +547,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                       <li key={u.id || i} className="flex items-center justify-between group/user p-1 -mx-1 rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors">
                         <div className="flex items-center gap-2">
                           <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-bold ${u.role === 'SUPERVISOR' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
-                            {u.role}
+                            {t.common.roles[u.role as keyof typeof t.common.roles] || u.role}
                           </span> 
                           {u.first_name} {u.last_name}
                         </div>
@@ -553,7 +555,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                           <button 
                             onClick={() => confirmRemoveEmployee(selectedAgentId, u.id, `${u.first_name} ${u.last_name}`)}
                             className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover/user:opacity-100 transition-all cursor-pointer p-1 rounded"
-                            title="Remove Employee"
+                            title={t.agents.removeEmp}
                           >
                             <UserMinus size={14} />
                           </button>
@@ -562,27 +564,27 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">No users explicitly listed yet.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">{t.agents.noUsers}</p>
                 )}
               </div>
             </div>
 
             <form onSubmit={handleAssignUser} className="p-6">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Select Employee to Assign</label>
+              <label className="block text-sm rtl:text-base font-semibold text-gray-700 dark:text-slate-300 mb-2">{t.agents.selectEmpLabel}</label>
               <select 
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none mb-6 text-gray-900 dark:text-white cursor-pointer transition-colors"
                 value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}
               >
-                <option value="" disabled>-- Choose an employee --</option>
+                <option value="" disabled>{t.agents.chooseEmp}</option>
                 {users.filter((u: any) => u.role === 'EMPLOYEE' && !agentUsers.some((au: any) => au.id === u.id)).map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name} ({user.email}) - {user.role}
+                    {user.first_name} {user.last_name} ({user.email}) - {t.common.roles[user.role as keyof typeof t.common.roles] || user.role}
                   </option>
                 ))}
               </select>
               <button type="submit" disabled={isAssigning} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all cursor-pointer ${isAssigning ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}>
-                {isAssigning ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Assigning...</> : 'Assign Employee'}
+                {isAssigning ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> {t.agents.assigningBtn}</> : t.agents.assignBtn}
               </button>
             </form>
           </div>
@@ -605,7 +607,7 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                 onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-all shadow-sm hover:shadow cursor-pointer"
               >
-                Okay
+                {t.common.okay}
               </button>
             </div>
           </div>
@@ -624,13 +626,13 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                   onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
                   className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button 
                   onClick={confirmDialog.onConfirm}
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
                 >
-                  Confirm
+                  {t.common.confirm}
                 </button>
               </div>
             </div>

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { login } from '@/services/auth';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
+import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   // 1. State Management: We use React's useState to hold the form data.
@@ -12,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { t, lang } = useLanguage();
 
   // 2. Next.js Router: This allows us to programmatically redirect the user after login.
   const router = useRouter();
@@ -31,7 +34,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (err: any) {
       // Edge Case Handling: Catch 401 Unauthorized or 400 Bad Request
-      let errorMessage = 'Login failed. Please check your credentials.';
+      let errorMessage = t.login.defaultError;
       const detail = err.response?.data?.detail;
       
       // Check if FastAPI returned a string (e.g. 401) or an array of objects (e.g. 422)
@@ -46,6 +49,11 @@ export default function LoginPage() {
       // Whether it succeeded or failed, stop the loading spinner
       setIsLoading(false);
     }
+  };
+
+  const handleLanguageChange = (newLang: 'en' | 'ar') => {
+    Cookies.set('language', newLang, { path: '/' });
+    window.location.reload();
   };
 
   return (
@@ -68,30 +76,31 @@ export default function LoginPage() {
               priority 
             />
           </div>
-          <h1 className="text-5xl font-extrabold text-white tracking-tight mb-4">
-            AI Agents Platform
+          <h1 className="text-5xl rtl:text-6xl font-extrabold text-white tracking-tight mb-4">
+            {t.login.brandingTitle}
           </h1>
-          <p className="text-lg text-slate-400 max-w-md">
-            Manage your AI agents, streamline workflows, and monitor real-time conversations with enterprise-grade security.
+          <p className="text-lg rtl:text-xl text-slate-400 max-w-md">
+            {t.login.brandingDesc}
           </p>
         </div>
       </div>
 
       {/* RIGHT SIDE: The Form */}
-      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8 relative">
+        
         <div className="max-w-sm w-full space-y-8">
           
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Please sign in to your account to continue.
+            <h2 className="text-3xl rtl:text-4xl font-bold text-gray-900 tracking-tight">{t.login.welcomeTitle}</h2>
+            <p className="mt-2 text-sm rtl:text-base text-gray-500">
+              {t.login.welcomeDesc}
             </p>
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
+                <label className="block text-sm rtl:text-base font-semibold text-gray-700 mb-1">{t.login.emailLabel}</label>
                 <input
                   type="email"
                   required
@@ -102,7 +111,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                <label className="block text-sm rtl:text-base font-semibold text-gray-700 mb-1">{t.login.passwordLabel}</label>
                 <input
                   type="password"
                   required
@@ -133,10 +142,17 @@ export default function LoginPage() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 )}
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? t.login.signingInBtn : t.login.signInBtn}
               </button>
             </div>
           </form>
+
+          {/* Quick Language Switcher */}
+          <div className="flex justify-center items-center gap-4 text-sm font-semibold pt-4">
+            <button onClick={() => handleLanguageChange('en')} className={`${lang === 'en' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'} transition-colors cursor-pointer`}>EN</button>
+            <span className="text-slate-300">|</span>
+            <button onClick={() => handleLanguageChange('ar')} className={`${lang === 'ar' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'} transition-colors cursor-pointer`}>AR</button>
+          </div>
         </div>
       </div>
     </div>

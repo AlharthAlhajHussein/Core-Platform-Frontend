@@ -5,6 +5,7 @@ import { getKnowledgeBuckets, createKnowledgeBucket, deleteKnowledgeBucket, uplo
 import { getSections } from '@/services/sections';
 import { getCurrentUser } from '@/services/users';
 import { Database, Plus, Trash2, UploadCloud, Filter, X, FileText, File, Check, AlertCircle, Info } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface KnowledgeClientProps {
   currentUserRole: 'OWNER' | 'SUPERVISOR' | 'EMPLOYEE';
@@ -15,6 +16,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
   const [buckets, setBuckets] = useState<any[]>([]);
   const [sections, setSections] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useLanguage();
   
   // Filters
   const [filterSectionId, setFilterSectionId] = useState<string>('ALL');
@@ -95,7 +97,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
   // --- EVENT HANDLERS ---
   const handleCreateBucket = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newKbSectionId) return showAlert('Missing Information', 'Please select a section for this Knowledge Bucket.', 'error');
+    if (!newKbSectionId) return showAlert(t.knowledge.alerts.missingInfo, t.knowledge.alerts.selectSecMsg, 'error');
     
     setIsCreating(true);
     try {
@@ -105,7 +107,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
       setNewKbSectionId('');
       fetchFilteredBuckets();
     } catch (error: any) {
-      showAlert('Error', error.response?.data?.detail || 'Failed to create Knowledge Bucket', 'error');
+      showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
     } finally {
       setIsCreating(false);
     }
@@ -114,15 +116,15 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
   const confirmDeleteBucket = (kbId: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Knowledge Bucket',
-      message: 'Are you sure you want to delete this Knowledge Bucket? This will unlink it from all associated agents.',
+      title: t.knowledge.alerts.deleteBucketTitle,
+      message: t.knowledge.alerts.deleteBucketMsg,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {
           await deleteKnowledgeBucket(kbId);
           fetchFilteredBuckets();
         } catch (error: any) {
-          showAlert('Error', error.response?.data?.detail || 'Failed to delete Knowledge Bucket', 'error');
+          showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
         }
       }
     });
@@ -131,15 +133,15 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
   const confirmDeleteDocument = (kbId: string, documentId: string, fileName: string) => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Delete Document',
-      message: `Are you sure you want to delete the document "${fileName}"?`,
+      title: t.knowledge.alerts.deleteDocTitle,
+      message: `${t.knowledge.alerts.deleteDocMsg1}${fileName}${t.knowledge.alerts.deleteDocMsg2}`,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {
           await deleteKnowledgeDocument(kbId, documentId);
           fetchFilteredBuckets();
         } catch (error: any) {
-          showAlert('Error', error.response?.data?.detail || 'Failed to delete document', 'error');
+          showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
         }
       }
     });
@@ -154,17 +156,17 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
 
   const handleUploadFiles = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (filesToUpload.length === 0) return showAlert('No Files Selected', 'Please select at least one file.', 'error');
+    if (filesToUpload.length === 0) return showAlert(t.knowledge.alerts.noFilesTitle, t.knowledge.alerts.noFilesMsg, 'error');
 
     setIsUploading(true);
     try {
       const response = await uploadKnowledgeFiles(selectedKbId, filesToUpload);
-      showAlert('Upload Successful', response.message || 'Files uploaded and are processing successfully!', 'success');
+      showAlert(t.knowledge.alerts.uploadSuccessTitle, response.message || t.knowledge.alerts.uploadSuccessMsg, 'success');
       setIsUploadOpen(false);
       setFilesToUpload([]);
       fetchFilteredBuckets();
     } catch (error: any) {
-      showAlert('Error', error.response?.data?.detail || 'Failed to upload files', 'error');
+      showAlert(t.common.error, error.response?.data?.detail || t.common.error, 'error');
     } finally {
       setIsUploading(false);
     }
@@ -181,10 +183,10 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
       {/* HEADER & ACTIONS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Database className="text-indigo-600 dark:text-indigo-400" /> Knowledge Base
+          <h1 className="text-2xl rtl:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Database className="text-indigo-600 dark:text-indigo-400" /> {t.knowledge.title}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage documents and training data for your RAG Agents.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 rtl:text-lg">{t.knowledge.subtitle}</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -197,7 +199,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                 value={filterSectionId}
                 onChange={(e) => setFilterSectionId(e.target.value)}
               >
-                <option value="ALL">All Sections</option>
+                <option value="ALL">{t.knowledge.filterAll}</option>
                 {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
               </select>
             </div>
@@ -209,7 +211,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
               onClick={() => setIsCreateOpen(true)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-sm hover:shadow-md cursor-pointer"
             >
-              <Plus size={20} /> Create Bucket
+            <Plus size={20} /> {t.knowledge.createBtn}
             </button>
           )}
         </div>
@@ -223,15 +225,15 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
       ) : buckets.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition-colors">
           <Database className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Knowledge Buckets found</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Upload documents to train your AI agents.</p>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white">{t.knowledge.noBuckets}</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t.knowledge.noBucketsSub}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {buckets.map((bucket) => (
             <div key={bucket.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 relative flex flex-col">
               <div className="flex items-start justify-between mb-4">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">{bucket.name}</h3>
+                <h3 className="text-xl rtl:text-2xl font-bold text-slate-800 dark:text-white">{bucket.name}</h3>
                 <div className="bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 p-2 rounded-lg transition-colors">
                   <Database size={20} />
                 </div>
@@ -239,11 +241,11 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
               
               {/* Documents List */}
               <div className="flex-1 mb-6">
-                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                  Documents ({bucket.documents?.length || 0})
+                <h4 className="text-xs rtl:text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+                  {t.knowledge.documents} ({bucket.documents?.length || 0})
                 </h4>
                 {(!bucket.documents || bucket.documents.length === 0) ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 italic">No documents uploaded.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t.knowledge.noDocs}</p>
                 ) : (
                   <ul className="space-y-1 max-h-32 overflow-y-auto pr-1">
                     {bucket.documents.map((doc: any) => (
@@ -255,7 +257,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                         <button
                           onClick={() => confirmDeleteDocument(bucket.id, doc.id, doc.file_name)}
                           className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover/doc:opacity-100 transition-all p-1 cursor-pointer"
-                          title="Delete Document"
+                          title={t.knowledge.deleteDocTitle}
                         >
                           <X size={14} />
                         </button>
@@ -270,14 +272,14 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                   onClick={() => openUploadModal(bucket.id)}
                   className="flex-1 bg-slate-100 dark:bg-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-700 dark:hover:text-indigo-400 text-slate-700 dark:text-slate-300 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
-                  <UploadCloud size={16} /> Upload Files
+                  <UploadCloud size={16} /> {t.knowledge.uploadBtn}
                 </button>
                 
                 {(currentUserRole === 'OWNER' || currentUserRole === 'SUPERVISOR') && (
                   <button 
                     onClick={() => confirmDeleteBucket(bucket.id)}
                     className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 dark:hover:text-red-300 hover:shadow-sm rounded-lg transition-all cursor-pointer"
-                    title="Delete Bucket"
+                    title={t.knowledge.deleteBucketTitle}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -293,28 +295,28 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-50 p-4 transition-colors">
           <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-colors">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Knowledge Bucket</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.knowledge.createModalTitle}</h2>
               <button onClick={() => !isCreating && setIsCreateOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             <form onSubmit={handleCreateBucket} className="p-6">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Bucket Name</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">{t.knowledge.bucketNameLabel}</label>
               <input 
                 type="text" required autoFocus
                 className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none mb-4 text-gray-900 dark:text-white transition-colors"
-                placeholder="e.g., Company Handbook"
+                placeholder={t.knowledge.bucketNamePlaceholder}
                 value={newKbName} onChange={(e) => setNewKbName(e.target.value)}
               />
-              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Assign to Section</label>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">{t.knowledge.assignSecLabel}</label>
               <select 
                 required
                 className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:ring-indigo-500 focus:outline-none mb-6 text-gray-900 dark:text-white cursor-pointer transition-colors"
                 value={newKbSectionId} onChange={(e) => setNewKbSectionId(e.target.value)}
               >
-                <option value="" disabled>-- Select a section --</option>
+                <option value="" disabled>{t.knowledge.selectSec}</option>
                 {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.name}</option>)}
               </select>
               <button type="submit" disabled={isCreating} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all cursor-pointer ${isCreating ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}>
-                {isCreating ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Creating...</> : 'Create Bucket'}
+                {isCreating ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> {t.knowledge.creatingBtn}</> : t.knowledge.createBtn}
               </button>
             </form>
           </div>
@@ -326,7 +328,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 flex items-center justify-center z-50 p-4 transition-colors">
           <div className="bg-white dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl shadow-xl w-full max-w-md overflow-hidden transition-colors">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Upload Knowledge Documents</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{t.knowledge.uploadModalTitle}</h2>
               <button onClick={() => !isUploading && setIsUploadOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 p-1 rounded-md transition-all cursor-pointer"><X size={20} /></button>
             </div>
             <form onSubmit={handleUploadFiles} className="p-6">
@@ -339,13 +341,13 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
                 <FileText className="mx-auto text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 mb-3 transition-colors" size={32} />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Click or drag files here to upload</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Supports PDF, DOCX, and TXT</p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t.knowledge.uploadBox1}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t.knowledge.uploadBox2}</p>
               </div>
 
               {filesToUpload.length > 0 && (
                 <div className="mb-6 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 max-h-32 overflow-y-auto transition-colors">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">{filesToUpload.length} Files Selected</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">{filesToUpload.length} {t.knowledge.filesSelected}</p>
                   <ul className="space-y-1">
                     {filesToUpload.map((f, i) => (
                       <li key={i} className="text-sm text-slate-700 dark:text-slate-300 flex items-center gap-2 truncate"><File size={14} className="text-indigo-500 dark:text-indigo-400 flex-shrink-0" /> {f.name}</li>
@@ -355,7 +357,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
               )}
 
               <button type="submit" disabled={isUploading || filesToUpload.length === 0} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all ${isUploading || filesToUpload.length === 0 ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md cursor-pointer'}`}>
-                {isUploading ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Processing...</> : <><UploadCloud size={20} /> Upload to RAG Container</>}
+                {isUploading ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> {t.knowledge.processingBtn}</> : <><UploadCloud size={20} /> {t.knowledge.uploadSubmitBtn}</>}
               </button>
             </form>
           </div>
@@ -378,7 +380,7 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                 onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}
                 className="w-full px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-all shadow-sm hover:shadow cursor-pointer"
               >
-                Okay
+                {t.common.okay}
               </button>
             </div>
           </div>
@@ -397,13 +399,13 @@ export default function KnowledgeClient({ currentUserRole }: KnowledgeClientProp
                   onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
                   className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {t.common.cancel}
                 </button>
                 <button 
                   onClick={confirmDialog.onConfirm}
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
                 >
-                  Delete
+                  {t.common.delete}
                 </button>
               </div>
             </div>
