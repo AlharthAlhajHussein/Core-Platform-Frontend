@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getCurrentUser, updateUserProfile, updateUserAccount, uploadProfileImage } from '@/services/users';
 import { Settings, User, Moon, Globe, Trash2, Check, AlertCircle, Info, Save, Shield, Camera, X } from 'lucide-react';
-import Image from 'next/image';
 import Cookies from 'js-cookie';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
@@ -111,9 +110,9 @@ const COUNTRY_CODES = [
   { code: '+90', flag: '🇹🇷', label: 'TR' },
   { code: '+886', flag: '🇹🇼', label: 'TW' },
   { code: '+380', flag: '🇺🇦', label: 'UA' },
-  { code: '+971', flag: '🇦🇪', label: 'UAE' }, // Preserved your custom UAE label
-  { code: '+44', flag: '🇬🇧', label: 'UK' },  // Preserved your custom UK label
-  { code: '+1', flag: '🇺🇸', label: 'US/CA' }, // Preserved your custom US/CA label
+  { code: '+971', flag: '🇦🇪', label: 'UAE' },
+  { code: '+44', flag: '🇬🇧', label: 'UK' }, 
+  { code: '+1', flag: '🇺🇸', label: 'US/CA' },
   { code: '+598', flag: '🇺🇾', label: 'UY' },
   { code: '+58', flag: '🇻🇪', label: 'VE' },
   { code: '+84', flag: '🇻🇳', label: 'VN' },
@@ -212,7 +211,6 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
         // 2. Hydrate Theme from Local Storage
         let currentTheme = localStorage.getItem('theme');
         if (!currentTheme) {
-          // Edge Case: No theme saved yet, check user's OS preference
           currentTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           localStorage.setItem('theme', currentTheme);
         }
@@ -276,7 +274,6 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
 
     setIsUploadingImage(true);
     try {
-      // Note: Backend must implement this endpoint to upload to GCS bucket: agent-platform-bucket-1
       const response = await uploadProfileImage(file);
       
       if (response && response.url) {
@@ -392,8 +389,9 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
               <div className="relative group">
                 <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border-4 border-white dark:border-slate-700 shadow-lg flex items-center justify-center relative flex-shrink-0 transition-all">
-                {profileData.profile_image && (profileData.profile_image.startsWith('http') || profileData.profile_image.startsWith('/')) ? (
-                    <Image src={profileData.profile_image} alt="Profile" fill className="object-cover" />
+                  {/* --- FIX: Changed next/image to standard img tag to prevent Next.js optimization timeouts --- */}
+                  {profileData.profile_image && (profileData.profile_image.startsWith('http') || profileData.profile_image.startsWith('/')) ? (
+                    <img src={profileData.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <User size={64} className="text-slate-400 dark:text-slate-500" />
                   )}
@@ -619,6 +617,7 @@ export default function SettingsClient({ currentUserId, currentUserRole }: Setti
           </div>
         </div>
       )}
+
     </div>
   );
 }

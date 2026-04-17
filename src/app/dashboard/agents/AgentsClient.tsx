@@ -166,8 +166,8 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
       name: agent.name || '',
       system_prompt: agent.system_prompt || '',
       section_id: agent.section_id || '', // Not used in PUT payload, but kept for logic
-      model_type: agent.model_type || 'gemini-2.5-flash',
-      temperature: agent.temperature ?? 0.7,
+      model_type: agent.model_type || 'gemini-2.5-pro',
+      temperature: agent.temperature ?? 0.2,
       knowledge_bucket_registry_id: agent.knowledge_bucket_id || '',
       whatsapp_number: agent.whatsapp_number || '',
       telegram_bot_username: agent.telegram_bot_username || '',
@@ -454,8 +454,8 @@ export default function AgentsClient({ currentUserRole }: AgentsClientProps) {
                   <select className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-indigo-600 dark:focus:outline-none text-gray-900 dark:text-white" value={formData.model_type} onChange={e => setFormData({...formData, model_type: e.target.value})}>
                     <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                     <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                    {/* <option value="gpt-4o">GPT-4o</option> */}
+                    {/* <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option> */}
                   </select>
                 </div>
                 <div>

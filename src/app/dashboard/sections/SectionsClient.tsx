@@ -40,7 +40,6 @@ export default function SectionsClient() {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // --- DATA FETCHING ---
-  // useEffect runs once when the component mounts
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -141,6 +140,15 @@ export default function SectionsClient() {
     });
   };
 
+  // --- FILTER ASSIGNABLE USERS ---
+  // Get an array of user IDs already in the selected section
+  const currentlyAssignedUserIds = selectedSectionId && sectionUsersMap[selectedSectionId] 
+    ? sectionUsersMap[selectedSectionId].map(u => u.id) 
+    : [];
+  
+  // Filter the main users list to exclude those already assigned
+  const availableUsersToAssign = users.filter(user => !currentlyAssignedUserIds.includes(user.id));
+
   return (
     <div className="p-8 max-w-7xl mx-auto text-slate-900 dark:text-slate-100 transition-colors">
       {/* HEADER */}
@@ -173,7 +181,6 @@ export default function SectionsClient() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sections.map((section) => {
-            // Get the users we fetched specifically for this section
             const sectionUsers = sectionUsersMap[section.id] || [];
 
             return (
@@ -189,7 +196,6 @@ export default function SectionsClient() {
                   <ul className="space-y-2">
                     {sectionUsers.map(user => (
                       <li key={user.id} className="flex items-center justify-between text-sm group/user p-1 -mx-1 rounded hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
-                        {/* group/user creates a targeted hover context for this specific list item */}
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-slate-700 dark:text-slate-200">{user.first_name} {user.last_name}</span>
                           <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md font-medium transition-colors">{t.common.roles[user.role as keyof typeof t.common.roles] || user.role}</span>
@@ -269,13 +275,22 @@ export default function SectionsClient() {
                 value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)}
               >
                 <option value="" disabled>{t.sections.chooseUserPlaceholder}</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name} ({user.email}) - {t.common.roles[user.role as keyof typeof t.common.roles] || user.role}
-                  </option>
-                ))}
+                {/* Dynamically display only available users */}
+                {availableUsersToAssign.length > 0 ? (
+                  availableUsersToAssign.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name} ({user.email}) - {t.common.roles[user.role as keyof typeof t.common.roles] || user.role}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No available users to assign</option>
+                )}
               </select>
-              <button type="submit" disabled={isAssigning} className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all cursor-pointer ${isAssigning ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}>
+              <button 
+                type="submit" 
+                disabled={isAssigning || availableUsersToAssign.length === 0} 
+                className={`w-full flex items-center justify-center gap-2 text-white font-semibold py-3 rounded-lg transition-all cursor-pointer ${isAssigning || availableUsersToAssign.length === 0 ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-md'}`}
+              >
                 {isAssigning ? <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> {t.sections.assigningBtn}</> : t.sections.assignBtn}
               </button>
             </form>
