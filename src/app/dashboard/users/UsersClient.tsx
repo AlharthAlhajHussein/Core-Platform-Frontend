@@ -103,8 +103,9 @@ export default function UsersClient({ currentUserRole, currentUserId }: UsersCli
     setIsCreating(true);
     
     try {
-      // Clean up payload based on role
-      const payload = { ...formData };
+      // --- FIX APPLIED HERE: Added ': any' to bypass strict TypeScript 'delete' rules ---
+      const payload: any = { ...formData };
+      
       if (currentUserRole === 'SUPERVISOR') {
         payload.role = 'EMPLOYEE';
         if (!payload.section_id) {
