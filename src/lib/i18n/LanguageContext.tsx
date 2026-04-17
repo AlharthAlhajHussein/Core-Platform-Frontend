@@ -49,6 +49,15 @@ export const dictionaries = {
       totalMessages: 'Messages Sent',
       totalTokens: 'Tokens Used',
       noData: 'No data available to display.',
+  // ... your existing overview translations ...
+      supportedChannels: "Supported Channels",
+      whatsappTitle: "WhatsApp",
+      whatsappDesc: "Our AI agents fully support WhatsApp interactions, providing seamless customer support directly where your users are most active.",
+      telegramTitle: "Telegram",
+      telegramDesc: "Connect a Telegram bot instantly. Agents process incoming media and messages in real-time with high performance.",
+      badgeText: "Text",
+      badgeAudio: "Audio",
+      badgeImages: "Images"
     },
     sections: {
       title: 'Sections Management',
@@ -157,6 +166,47 @@ export const dictionaries = {
         noFilesMsg: 'Please select at least one file.',
         uploadSuccessTitle: 'Upload Successful',
         uploadSuccessMsg: 'Files uploaded and are processing successfully!',
+      }
+    },
+    conversations: {
+      title: 'Conversations',
+      subtitle: 'Monitor live chats and step in when needed.',
+      filterAllStatuses: 'All Statuses',
+      filterAllPlatforms: 'All Platforms',
+      filterAllAgents: 'All Agents',
+      filterAllUsers: 'All Users',
+      whatsapp: 'WhatsApp',
+      telegram: 'Telegram',
+      searchPlaceholder: 'Search...',
+      noConversations: 'No conversations found.',
+      noConversationsSub: 'Chats will appear here as users interact with your agents.',
+      selectToView: 'Select a conversation to view its history',
+      status: 'Status',
+      statusTypes: {
+        ACTIVE: 'Active',
+        PENDING_HUMAN: 'Pending Human',
+        COMPLETED: 'Completed'
+      },
+      evaluateBtn: 'Evaluate AI',
+      evalModalTitle: 'Evaluate AI Performance',
+      evalLabel: 'Rating',
+      notesLabel: 'Notes',
+      notesPlaceholder: 'Add feedback for the AI model...',
+      evalTypes: {
+        BAD: 'Bad',
+        NORMAL: 'Normal',
+        GOOD: 'Good',
+        VERY_GOOD: 'Very Good',
+        EXCELLENT: 'Excellent',
+        OTHERS: 'Others'
+      },
+      evalSubmitBtn: 'Submit Evaluation',
+      evaluatingBtn: 'Submitting...',
+      loadMore: 'Load More',
+      alerts: {
+        notesRequired: 'Notes are strictly required when selecting "Others".',
+        statusSuccess: 'Status updated successfully.',
+        evalSuccess: 'Evaluation saved successfully.',
       }
     },
     agents: {
@@ -340,6 +390,14 @@ export const dictionaries = {
       totalMessages: 'الرسائل المرسلة',
       totalTokens: 'الرموز المستخدمة',
       noData: 'لا توجد بيانات متاحة للعرض.',
+      supportedChannels: "القنوات المدعومة",
+      whatsappTitle: "واتساب",
+      whatsappDesc: "يدعم وكلاء الذكاء الاصطناعي لدينا تفاعلات واتساب بالكامل، مما يوفر دعماً سلساً للعملاء مباشرة حيث ينشط مستخدموك.",
+      telegramTitle: "تليجرام",
+      telegramDesc: "قم بتوصيل بوت تليجرام فوراً. يعالج الوكلاء الوسائط والرسائل الواردة في الوقت الفعلي بأداء عالٍ.",
+      badgeText: "نص",
+      badgeAudio: "صوت",
+      badgeImages: "صور"
     },
     sections: {
       title: 'إدارة الأقسام',
@@ -448,6 +506,47 @@ export const dictionaries = {
         noFilesMsg: 'الرجاء تحديد ملف واحد على الأقل.',
         uploadSuccessTitle: 'تم الرفع بنجاح',
         uploadSuccessMsg: 'تم رفع الملفات ومعالجتها بنجاح!',
+      }
+    },
+    conversations: {
+      title: 'المحادثات',
+      subtitle: 'راقب المحادثات المباشرة وتدخل عند الحاجة.',
+      filterAllStatuses: 'جميع الحالات',
+      filterAllPlatforms: 'جميع المنصات',
+      filterAllAgents: 'جميع الوكلاء',
+      filterAllUsers: 'جميع المستخدمين',
+      whatsapp: 'واتساب',
+      telegram: 'تيليجرام',
+      searchPlaceholder: 'البحث...',
+      noConversations: 'لا توجد محادثات.',
+      noConversationsSub: 'ستظهر المحادثات هنا عندما يتفاعل المستخدمون مع وكلائك.',
+      selectToView: 'حدد محادثة لعرض سجلها',
+      status: 'الحالة',
+      statusTypes: {
+        ACTIVE: 'نشط',
+        PENDING_HUMAN: 'بانتظار تدخل بشري',
+        COMPLETED: 'مكتمل'
+      },
+      evaluateBtn: 'تقييم الذكاء الاصطناعي',
+      evalModalTitle: 'تقييم أداء الذكاء الاصطناعي',
+      evalLabel: 'التقييم',
+      notesLabel: 'ملاحظات',
+      notesPlaceholder: 'أضف ملاحظاتك لنموذج الذكاء الاصطناعي...',
+      evalTypes: {
+        BAD: 'سيء',
+        NORMAL: 'عادي',
+        GOOD: 'جيد',
+        VERY_GOOD: 'جيد جداً',
+        EXCELLENT: 'ممتاز',
+        OTHERS: 'أخرى'
+      },
+      evalSubmitBtn: 'إرسال التقييم',
+      evaluatingBtn: 'جاري الإرسال...',
+      loadMore: 'تحميل المزيد',
+      alerts: {
+        notesRequired: 'الملاحظات مطلوبة بشكل صارم عند اختيار "أخرى".',
+        statusSuccess: 'تم تحديث الحالة بنجاح.',
+        evalSuccess: 'تم حفظ التقييم بنجاح.',
       }
     },
     agents: {
