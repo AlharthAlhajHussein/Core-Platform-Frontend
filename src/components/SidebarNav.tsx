@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Bot, MessageSquare, Database, Layers, Settings } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
-export default function SidebarNav({ role }: { role: string }) {
+export default function SidebarNav({ role, onClose }: { role: string; onClose?: () => void }) {
   // usePathname gives us the exact current URL (e.g., "/dashboard/sections")
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -33,7 +33,7 @@ export default function SidebarNav({ role }: { role: string }) {
           const name = t.sidebar[link.key as keyof typeof t.sidebar];
           
           return (
-            <Link key={link.key} href={link.href} className={`flex items-center gap-3 px-3 py-2.5 text-sm rtl:text-base font-medium rtl:font-bold rounded-lg transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'}`}>
+            <Link key={link.key} href={link.href} onClick={onClose} className={`flex items-center gap-3 px-3 py-2.5 text-sm rtl:text-base font-medium rtl:font-bold rounded-lg transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'}`}>
               <Icon size={20} /> {name}
             </Link>
           );
