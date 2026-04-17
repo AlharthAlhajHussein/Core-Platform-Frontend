@@ -29,3 +29,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- Telegram Chat Theme Colors --- */
+
+/* 1. Chat Page Background */
+.telegram-chat-bg { background-color: #E4EAF1; }
+.dark .telegram-chat-bg { background-color: #0E1621; }
+
+/* 2. Outgoing Messages (AI/Agent - Right side) */
+.telegram-bubble-out { background-color: #EEFFDE; }
+.dark .telegram-bubble-out { background-color: #2B5278; }
+
+/* 3. Incoming Messages (User - Left side) */
+.telegram-bubble-in { background-color: #FFFFFF; }
+.dark .telegram-bubble-in { background-color: #182533; }

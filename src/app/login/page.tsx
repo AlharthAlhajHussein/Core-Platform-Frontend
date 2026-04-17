@@ -3,41 +3,36 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link'; // NEW: Imported Link
 import { login } from '@/services/auth';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import Cookies from 'js-cookie';
+import { ArrowLeft, ArrowRight } from 'lucide-react'; // NEW: Imported Icons
 
 export default function LoginPage() {
-  // 1. State Management: We use React's useState to hold the form data.
-  // As the user types, these variables update in real-time.
+  // 1. State Management
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { t, lang } = useLanguage();
 
-  // 2. Next.js Router: This allows us to programmatically redirect the user after login.
+  // 2. Next.js Router
   const router = useRouter();
 
   // 3. Form Submission Handler
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevents the browser from refreshing the page on submit
-    setError('');       // Clear any previous errors
-    setIsLoading(true); // Disable the button and show a loading state
+    e.preventDefault(); 
+    setError('');       
+    setIsLoading(true); 
 
     try {
-      // Call the API service we built in Phase 2
       await login(username, password);
-      
-      // If we reach this line, the login was successful and cookies are set!
-      // Redirect the user to the protected dashboard.
       router.push('/dashboard');
     } catch (err: any) {
-      // Edge Case Handling: Catch 401 Unauthorized or 400 Bad Request
       let errorMessage = t.login.defaultError;
       const detail = err.response?.data?.detail;
       
-      // Check if FastAPI returned a string (e.g. 401) or an array of objects (e.g. 422)
       if (typeof detail === 'string') {
         errorMessage = detail;
       } else if (Array.isArray(detail) && detail.length > 0 && detail[0].msg) {
@@ -46,7 +41,6 @@ export default function LoginPage() {
 
       setError(errorMessage);
     } finally {
-      // Whether it succeeded or failed, stop the loading spinner
       setIsLoading(false);
     }
   };
@@ -86,8 +80,19 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE: The Form */}
-      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8 relative">
+      <div className="flex-1 flex flex-col items-center justify-center bg-white px-4 sm:px-6 lg:px-8 relative py-12">
         
+        {/* --- NEW: Absolute positioning for Back Button on larger screens, relative on mobile --- */}
+        <div className="w-full max-w-sm mb-8 sm:absolute sm:top-8 sm:left-8 rtl:sm:right-8 rtl:sm:left-auto">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+          >
+            {lang === 'ar' ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
+            {lang === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
+          </Link>
+        </div>
+
         <div className="max-w-sm w-full space-y-8">
           
           <div>
