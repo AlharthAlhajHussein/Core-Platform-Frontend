@@ -9,6 +9,10 @@ FROM node:24-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# --- NEW: Bake the production API URL into the build ---
+ENV NEXT_PUBLIC_API_URL=https://core-platform-api-173690049028.europe-west4.run.app/api/v1
+
 # This will build the Next.js app
 RUN npm run build
 
